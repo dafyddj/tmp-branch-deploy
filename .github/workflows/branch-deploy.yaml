@@ -37,7 +37,7 @@ jobs:
       # conditionally run a noop deployment
       - name: fake noop deploy
         if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop == 'true' }} # only run if the trigger phrase is found and the branch-deploy step detected a noop deployment
-        run: echo "I am doing a fake noop deploy of commit ref $GITHUB_HEAD_REF to environment ${{ steps.branch-deploy.outputs.environment }}"
+        run: echo "I am doing a fake noop deploy of commit ref ${{ steps.branch-deploy.outputs.ref }} to environment ${{ steps.branch-deploy.outputs.environment }}"
 
       # Do some fake "regular" deployment logic here
       # conditionally run a regular deployment
