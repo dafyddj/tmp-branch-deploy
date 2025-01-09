@@ -29,9 +29,9 @@ jobs:
 
       # Run your deployment logic for your project here - examples seen below
       - run: |
-        SHA=${{ steps.branch-deploy.outputs.sha }}
-        SHORT_SHA=${SHA::7}
-        echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          SHA=${{ steps.branch-deploy.outputs.sha }}
+          SHORT_SHA=${SHA::7}
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
 
       # Do some fake "noop" deployment logic here
       # conditionally run a noop deployment
