@@ -18,29 +18,45 @@ jobs:
     if: ${{ github.event.issue.pull_request }} # only run on pull request comments (no need to run on issue comments)
     runs-on: ubuntu-latest
     steps:
+      - name: Debug on runner (When re-run with "Enable debug logging" checked)
+        if: runner.debug
+        uses: mxschmitt/action-tmate@e5c7151931ca95bad1c6f4190c730ecf8c7dde48 # v3.19
+        with:
+          detached: true
       # Execute IssueOps branch deployment logic, hooray!
       # This will be used to "gate" all future steps below and conditionally trigger steps/deployments
       - uses: github/branch-deploy@v10.0.0
         id: branch-deploy # it is critical you have an id here so you can reference the outputs of this step
         with:
-          trigger: ".deploy" # the trigger phrase to look for in the comment on the pull request
+          environment: stable
+          environment_targets: alpha,beta,stable
+          enforced_deployment_order: alpha,beta,stable
 
       # Run your deployment logic for your project here - examples seen below
-
-      # Checkout your project repository based on the ref provided by the branch-deploy step
-      - uses: actions/checkout@v4.2.2
-        if: ${{ steps.branch-deploy.outputs.continue == 'true' }} # skips if the trigger phrase is not found
-        with:
-          ref: ${{ steps.branch-deploy.outputs.ref }} # uses the detected branch from the branch-deploy step
+      - run: |
+          SHA=${{ steps.branch-deploy.outputs.sha }}
+          SHORT_SHA=${SHA::7}
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
 
       # Do some fake "noop" deployment logic here
       # conditionally run a noop deployment
       - name: fake noop deploy
         if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop == 'true' }} # only run if the trigger phrase is found and the branch-deploy step detected a noop deployment
-        run: echo "I am doing a fake noop deploy of commit ref ${{ steps.branch-deploy.outputs.ref }} to environment ${{ steps.branch-deploy.outputs.environment }}"
+        run: echo "I am doing a fake noop deploy of commit ref ${{ steps.branch-deploy.outputs.ref }} (${{ env.SHORT_SHA }}) to environment ${{ steps.branch-deploy.outputs.environment }}"
 
       # Do some fake "regular" deployment logic here
-      # conditionally run a regular deployment
-      - name: fake regular deploy
+      # Checkout your project repository based on the ref provided by the branch-deploy step
+      - uses: actions/checkout@v4.2.2
         if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop != 'true' }} # only run if the trigger phrase is found and the branch-deploy step detected a regular deployment
-        run: echo "I am doing a fake regular deploy"
+        with:
+          fetch-depth: 0
+          filter: tree:0
+          ref: ${{ steps.branch-deploy.outputs.environment }} # uses the detected branch from the branch-deploy step
+      # conditionally run a regular deployment
+      - name: regular deploy
+        if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop != 'true' }} # only run if the trigger phrase is found and the branch-deploy step detected a regular deployment
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --no-ff --no-edit ${{ steps.branch-deploy.outputs.sha }}
+          git push
