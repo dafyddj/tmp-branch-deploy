@@ -18,6 +18,11 @@ jobs:
     if: ${{ github.event.issue.pull_request }} # only run on pull request comments (no need to run on issue comments)
     runs-on: ubuntu-latest
     steps:
+      - name: Debug on runner (When re-run with "Enable debug logging" checked)
+        if: runner.debug
+        uses: mxschmitt/action-tmate@e5c7151931ca95bad1c6f4190c730ecf8c7dde48 # v3.19
+        with:
+          detached: true
       # Execute IssueOps branch deployment logic, hooray!
       # This will be used to "gate" all future steps below and conditionally trigger steps/deployments
       - uses: github/branch-deploy@v10.0.0
