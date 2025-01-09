@@ -49,9 +49,14 @@ jobs:
       - uses: actions/checkout@v4.2.2
         if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop != 'true' }} # only run if the trigger phrase is found and the branch-deploy step detected a regular deployment
         with:
+          fetch-depth: 0
+          filter: tree:0
           ref: ${{ steps.branch-deploy.outputs.environment }} # uses the detected branch from the branch-deploy step
       # conditionally run a regular deployment
       - name: regular deploy
         if: ${{ steps.branch-deploy.outputs.continue == 'true' && steps.branch-deploy.outputs.noop != 'true' }} # only run if the trigger phrase is found and the branch-deploy step detected a regular deployment
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git merge --no-ff --no-edit ${{ steps.branch-deploy.outputs.sha }}
+          git push
