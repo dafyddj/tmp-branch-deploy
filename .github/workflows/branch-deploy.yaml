@@ -25,6 +25,7 @@ jobs:
         with:
           environment: stable
           environment_targets: alpha,beta,stable
+          enforced_deployment_order: alpha,beta,stable
 
       # Run your deployment logic for your project here - examples seen below
 
